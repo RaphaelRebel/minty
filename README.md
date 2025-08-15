@@ -20,3 +20,6 @@ https://phppot.com/php/simple-php-shopping-cart/
 
 Ik heb last gehad van een bug dat de sessie een reset gaf. Dat bleek uitendelijk 
   <?php session_abort(); ?> te zijn
+
+  Ik heb voor het gemak van de gebruiker de .env erin gehouden, maar ik zou het normaal gesproken in .gitignore doen
+  
