@@ -1,5 +1,5 @@
 <?php
-$page = isset($_GET['page']) ?? 'home';
+$page = $_GET['page'] ?? 'home';
 switch ($page) {
   case 'dashboard':
       require_once('dashboard.php');

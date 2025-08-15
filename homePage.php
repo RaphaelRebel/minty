@@ -62,7 +62,12 @@ $sessionManager->manageAction();
 
   // $GET is geen veilige manier om data te krijgen, inplaats daarvan gebruik ik filter_input
   $domain = filter_input(INPUT_GET, 'domain');
-  $domain = str_replace(" ", "", $domain);
+  $domain = trim((string) ($_GET['domain'] ?? ''));
+  if ($domain !== '' && !preg_match('/^[A-Za-z0-9-]{1,63}$/', $domain)) {
+    echo "Ongeldige domeinnaam.";
+    exit;
+  }
+
   // $_SESSION['search_domain'] = $domain;
   echo "Domein: " . htmlspecialchars($domain) . "<br>";
   $data = $domains->getDomains($domain);
@@ -81,6 +86,7 @@ $sessionManager->manageAction();
     <?php
     try {
       foreach ($data as $domain) {
+       
         if (!empty($domain['domain']) && !str_starts_with($domain['domain'], 'null') && !str_starts_with($domain['domain'], ".")) {
 
 
@@ -88,6 +94,8 @@ $sessionManager->manageAction();
           $domainCode = base64_encode($domainCode);
 
           $product = $domain['price']['product'];
+
+          $product['price'] = number_format((float)$product['price'], 2, '.', '');
           ?>
           <div>
             <ul>
@@ -154,7 +162,7 @@ $sessionManager->manageAction();
             <div>
               <li><?= htmlspecialchars($domainDecoded['domain']) ?>
                 <p>
-                  <?= $currency[$domainDecoded['price']['product']['currency']] . htmlspecialchars($domainDecoded['price']['product']['price']) ?>
+                  <?= $currency[$domainDecoded['price']['product']['currency']] . htmlspecialchars(number_format((float)$domainDecoded['price']['product']['price'], 2, '.', '')) ?>
                 </p>
               </li>
 
@@ -175,9 +183,9 @@ $sessionManager->manageAction();
         ?>
       </ul>
       <div>
-        <p>Prijs: <?= $totalPrice ?></p>
-        <p>BTW: <?= $BTWOnly ?></p>
-        <h3>Totaal: <?= $totalPrice ?></h3>
+        <p>Prijs: <?= number_format((float)$totalPrice, 2, '.', '') ?></p>
+        <p>BTW: <?= number_format((float)$BTWOnly, 2, '.', '') ?></p>
+        <h3>Totaal: <?= number_format((float)$totalPriceWithBTW, 2, '.', '') ?></h3>
         <form action="" method="post">
 
           <input type="hidden" name="action" value="create">

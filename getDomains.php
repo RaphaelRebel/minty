@@ -39,7 +39,7 @@ class GetDomains
                   }
          }
 
-         public function callApi($method, $domain = 'rebootz')
+         public function callApi($method, $domain = 'rebootz'): bool|string
          {
                   try {
                            //Voeg hier de data toe.. Naam, extensions, ect..
@@ -91,7 +91,10 @@ class GetDomains
 
 
 
-
+                           if ($result === false) {
+                                    throw new RuntimeException('cURL error ' . curl_errno($curl) . ': ' . curl_error($curl));
+                           }
+                           
                            return $result;
                   } catch (Exception $e) {
                            // Handle exception

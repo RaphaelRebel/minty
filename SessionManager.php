@@ -27,7 +27,7 @@ class SessionManager
 
          }
 
-         public function connectToDB($host, $user, $password, $db)
+         public function connectToDB($host, $user, $password, $db): mysqli|string
          {
                   try{
                   $db = new mysqli(
@@ -49,9 +49,11 @@ class SessionManager
          }
 
 
-         public function returnOrders()
+         public function returnOrders(): array|bool|string
          {
                   try {
+
+                           //Voor gemak van de gebruiker zal ik $this->server_name gebruiken, zo hoeft de gebruiker niks aan te passen, maar anders zou ik de DB name uit .env halen.
                            $db = $this->connectToDB($this->server_name, $this->user, $this->password, $this->db);
                            $sqlOrders = "SELECT * FROM orders";
                            $sqlOrdersOverview = "SELECT * FROM orders_overview";
@@ -93,11 +95,11 @@ class SessionManager
                   }
          }
 
-         public function manageAction()
+         public function manageAction(): void
          {
                   $action = $_POST['action'] ?? null;
 
-                  if ($action === null && $this->isAction($action)) {
+                  if ($action === null && !$this->isAction($action)) {
                            return;
                   }
 
@@ -122,7 +124,7 @@ class SessionManager
                   return;
          }
 
-         private function addAction()
+         private function addAction(): void
          {
                   $code = $_POST['code'] ?? '';
 
@@ -140,7 +142,7 @@ class SessionManager
                   }
          }
 
-         private function removeAction()
+         private function removeAction(): void
          {
                   $removeAdded = $_SESSION['added'];
 
@@ -158,7 +160,7 @@ class SessionManager
                   exit;
          }
 
-         private function removeSingleAction()
+         private function removeSingleAction(): void
          {
                   $code = $_POST['code'] ?? '';
 
@@ -173,7 +175,7 @@ class SessionManager
                   exit;
          }
 
-         private function createAction()
+         private function createAction(): bool|string
          {
 
                   try {
@@ -215,7 +217,7 @@ class SessionManager
 
                                     $parentId = $createOrderOverviewSQL->insert_id;
                                     $domain = $key_decoded->domain;
-                                    $price = intval($key_decoded->price->product->price);
+                                    $price = number_format((float)$key_decoded->price->product->price, 2, '.', '');
                                     $status = $key_decoded->status;
                                     $currency = $key_decoded->price->product->currency;
 
@@ -244,7 +246,7 @@ class SessionManager
                   }
          }
 
-         public function isAction($action)
+         public function isAction($action): bool
          {
                   if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === $action) {
                            return true;
