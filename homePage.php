@@ -79,42 +79,47 @@ $sessionManager->manageAction();
   ?>
   <div class="domain-layout">
     <?php
-    foreach ($data as $domain) {
-      if (!empty($domain['domain']) && !str_starts_with($domain['domain'], 'null') && !str_starts_with($domain['domain'], ".")) {
+    try {
+      foreach ($data as $domain) {
+        if (!empty($domain['domain']) && !str_starts_with($domain['domain'], 'null') && !str_starts_with($domain['domain'], ".")) {
 
 
-        $domainCode = json_encode($domain);
-        $domainCode = base64_encode($domainCode);
+          $domainCode = json_encode($domain);
+          $domainCode = base64_encode($domainCode);
 
-        $product = $domain['price']['product'];
-        ?>
-        <div>
-          <ul>
-            <form action="" method="post">
-              <input type="hidden" name="action" value="add">
-              <input type="hidden" name="code" value="<?= $domainCode ?>">
-              <li>Domein: <?= $domain['domain'] ?></li>
-              <li>Status: <?= $domain['status'] ?></li>
-              <li>Prijs: <?= $currency[$product['currency']] . htmlspecialchars($product['price']) ?></li>
-              <?php if ($domain['status'] !== "active") { ?>
-                <div class="cart-action"><input type="submit" value="Toevoegen" /></div><?php } else {
-                ?>
-                <div class="cart-action">Niet beschikbaar</div><?php
-              } ?>
-            </form>
-          </ul>
+          $product = $domain['price']['product'];
+          ?>
+          <div>
+            <ul>
+              <form action="" method="post">
+                <input type="hidden" name="action" value="add">
+                <input type="hidden" name="code" value="<?= $domainCode ?>">
+                <li>Domein: <?= $domain['domain'] ?></li>
+                <li>Status: <?= $domain['status'] ?></li>
+                <li>Prijs: <?= $currency[$product['currency']] . htmlspecialchars($product['price']) ?></li>
+                <?php if ($domain['status'] !== "active") { ?>
+                  <div class="cart-action"><input type="submit" value="Toevoegen" /></div><?php } else {
+                  ?>
+                  <div class="cart-action">Niet beschikbaar</div><?php
+                } ?>
+              </form>
+            </ul>
 
-          <?php if ($_SESSION['added'][$domainCode] ?? false) {
-            echo "<p>Dit domein is toegevoegd aan de winkelwagen.</p>";
-          } ?>
-        </div>
+            <?php if ($_SESSION['added'][$domainCode] ?? false) {
+              echo "<p>Dit domein is toegevoegd aan de winkelwagen.</p>";
+            } ?>
+          </div>
 
-        <?php
+          <?php
 
 
 
+        }
+        ;
       }
-      ;
+    } catch (Exception $e) {
+      // Handle exception
+      return json_encode(['error' => 'An error occurred while reading the domains: ' . $e->getMessage()]);
     }
 
 
@@ -127,67 +132,71 @@ $sessionManager->manageAction();
     <h2>Winkelwagen: </h2>
     <ul>
       <?php
+      try {
+        $totalPrice = 0;
 
-      $totalPrice = 0;
 
+        if ($_SESSION['added'] ?? false) {
 
-      if ($_SESSION['added']) {
-        
-        foreach ($_SESSION['added'] as $bitDomain => $value) {
-          $domainDecoded = base64_decode($bitDomain);
-          if ($domainDecoded === false) {
-            continue; // skip invalid base64
+          foreach ($_SESSION['added'] as $bitDomain => $value) {
+            $domainDecoded = base64_decode($bitDomain);
+            if ($domainDecoded === false) {
+              continue; // skip invalid base64
+            }
+            $domainDecoded = json_decode($domainDecoded, true);
+
+            if (!is_array($domainDecoded) || empty($domainDecoded['price']['product']['price'])) {
+              continue;
+            }
+
+            $totalPrice += $domainDecoded['price']['product']['price'];
+            ?>
+            <div>
+              <li><?= htmlspecialchars($domainDecoded['domain']) ?>
+                <p>
+                  <?= $currency[$domainDecoded['price']['product']['currency']] . htmlspecialchars($domainDecoded['price']['product']['price']) ?>
+                </p>
+              </li>
+
+              <form action="" method="post">
+                <input type="hidden" name="action" value="remove_single">
+                <input type="hidden" name="code" value="<?= $bitDomain ?>">
+                <input type="submit" value="Verwijder Domein">
+              </form>
+            </div>
+            <?php
           }
-          $domainDecoded = json_decode($domainDecoded, true);
 
-          if (!is_array($domainDecoded) || empty($domainDecoded['price']['product']['price'])) {
-            continue;
-          }
-
-          $totalPrice += $domainDecoded['price']['product']['price'];
-          ?>
-          <div>
-            <li><?= htmlspecialchars($domainDecoded['domain']) ?>
-              <p>
-                <?= $currency[$domainDecoded['price']['product']['currency']] . htmlspecialchars($domainDecoded['price']['product']['price']) ?>
-              </p>
-            </li>
-
-            <form action="" method="post">
-              <input type="hidden" name="action" value="remove_single">
-              <input type="hidden" name="code" value="<?= $bitDomain ?>">
-              <input type="submit" value="Verwijder Domein">
-            </form>
-          </div>
-          <?php
         }
 
-      }
+        //Voeg BTW toe aan de totale prijs
+        $totalPriceWithBTW = number_format(round($totalPrice * 1.21, 1), 2);
+        $BTWOnly = $totalPriceWithBTW - $totalPrice;
+        ?>
+      </ul>
+      <div>
+        <p>Prijs: <?= $totalPrice ?></p>
+        <p>BTW: <?= $BTWOnly ?></p>
+        <h3>Totaal: <?= $totalPrice ?></h3>
+        <form action="" method="post">
 
-      //Voeg BTW toe aan de totale prijs
-      $totalPriceWithBTW = number_format(round($totalPrice * 1.21, 1), 2);
-      $BTWOnly = $totalPriceWithBTW - $totalPrice;
-      ?>
-    </ul>
-    <div>
-      <p>Prijs: <?= $totalPrice ?></p>
-      <p>BTW: <?= $BTWOnly ?></p>
-      <h3>Totaal: <?= $totalPrice ?></h3>
+          <input type="hidden" name="action" value="create">
+          <input type="submit" value="Bestellen">
+        </form>
+
+
+      </div>
+
       <form action="" method="post">
 
-        <input type="hidden" name="action" value="create">
-        <input type="submit" value="Bestellen">
+        <input type="hidden" name="action" value="remove">
+        <input type="submit" value="Winkelwagen leegmaken">
       </form>
-
-
     </div>
-
-    <form action="" method="post">
-
-      <input type="hidden" name="action" value="remove">
-      <input type="submit" value="Winkelwagen leegmaken">
-    </form>
-  </div>
+  <?php } catch (Exception $e) {
+        // Handle exception
+        return json_encode(['error' => 'An error occurred while reading the added domains: ' . $e->getMessage()]);
+      } ?>
 
 </body>
 

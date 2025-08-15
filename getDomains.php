@@ -41,70 +41,64 @@ class GetDomains
 
          public function callApi($method, $domain = 'rebootz')
          {
+                  try {
+                           //Voeg hier de data toe.. Naam, extensions, ect..
+                           $data = array();
 
-                  //Voeg hier de data toe.. Naam, extensions, ect..
-                  $data = array();
+                           foreach ($this->tdls as $tdl) {
+                                    $data[] = array(
+                                             "name" => $domain,
+                                             "extension" => $tdl
+                                    );
+                           }
 
-                  foreach ($this->tdls as $tdl) {
-                           $data[] = array(
-                                    "name" => $domain,
-                                    "extension" => $tdl
-                           );
+
+                           //start cUrl
+                           $curl = curl_init();
+
+                           //Voeg cURL opties toe (Voor nu, alleen POST..)
+                           switch ($method) {
+                                    case 'POST':
+                                             curl_setopt($curl, CURLOPT_POST, 1);
+
+                                             // if($this->params){
+                                             //          curl_setopt($curl, CURLOPT_POSTFIELDS, $this->params);
+                                             // }
+
+                                             if ($data) {
+                                                      curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+                                             }
+                                             break;
+                                    default:
+                                             return json_encode(['error' => 'Wrong method applied.']);
+                           }
+
+
+                           //Add URL
+                           curl_setopt($curl, CURLOPT_URL, $this->apiUrl);
+                           //Add headers
+                           $headers = [
+                                    'Authorization: ' . $this->apiKey,
+                                    'Content-Type: application/json',
+                                    'Accept: application/json',
+                           ];
+
+                           curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+                           //Zorg ervoor dat de response wordt teruggegeven
+                           curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+                           $result = curl_exec($curl);
+
+
+
+
+                           return $result;
+                  } catch (Exception $e) {
+                           // Handle exception
+                           return json_encode(['error' => 'An error occurred while fetching the API: ' . $e->getMessage()]);
                   }
-
-
-                  //start cUrl
-                  $curl = curl_init();
-
-                  //Voeg cURL opties toe (Voor nu, alleen POST..)
-                  switch ($method) {
-                           case 'POST':
-                                    curl_setopt($curl, CURLOPT_POST, 1);
-
-                                    // if($this->params){
-                                    //          curl_setopt($curl, CURLOPT_POSTFIELDS, $this->params);
-                                    // }
-
-                                    if ($data) {
-                                             curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-                                    }
-                                    break;
-                           default:
-                                    return json_encode(['error' => 'Wrong method applied.']);
-                  }
-
-
-                  //Add URL
-                  curl_setopt($curl, CURLOPT_URL, $this->apiUrl);
-                  //Add headers
-                  $headers = [
-                           'Authorization: ' . $this->apiKey,
-                           'Content-Type: application/json',
-                           'Accept: application/json',
-                  ];
-
-                  curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-
-                  //Zorg ervoor dat de response wordt teruggegeven
-                  curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-                  $result = curl_exec($curl);
-
-
-
-
-                  return $result;
 
          }
-
-         // private function storeAndReturnDomains($api, $domain)
-         // {
-         //          if (isset($_SESSION['domains'][$domain])) {
-         //                   return $_SESSION['domains'][$domain];
-         //          } else {
-         //                   $_SESSION['domains'][$domain] = $api;
-         //          }
-         //          return $_SESSION['domains'][$domain];
-         // }
 
          public function getDomains($domain): bool|string|array
          {
